@@ -1,0 +1,47 @@
+TODO:
+
+Forward janin@mod9.com google to forward to main address.
+(Need to add all aliases to forwarding)
+Add aliases to main gmail
+
+Bring Social Security Card or Birth Cert
+
+
+----------------------------------------------------------------------
+Printer:
+WeWork TeamID for printing: 79102, pw 1947
+pcc client
+PaperCut ID and Pin
+
+Email: janin@remeeting.com (and a bunch of others)
+----------------------------------------------------------------------
+Change various email (e.g. bitbucket) to go to janin.org
+----------------------------------------------------------------------
+mrp-go on bitbucket
+
+Jira (Issue tracker, etc)
+https://remeeting.atlassian.net
+----------------------------------------------------------------------
+Ansible
+
+remeeting.com/aws
+
+
+git clone git@bitbucket.org:remeeting/mrp-ops.git
+
+mail.mod9.com
+
+
+ansible-playbook osx.yml -e mrp_user_id=janin -K
+
+----------------------------------------------------------------------
+
+Production aws
+remeeting.com labs.remeeting.com
+
+dev
+www-dev.remeeting.com www-janin.rmtg
+
+es.rmtg.co has dev es, communicates only with www-dev
+Production es not accessible to outside world.
+www-janin would use localhost es

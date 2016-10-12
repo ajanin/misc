@@ -1,0 +1,61 @@
+recording_time -s4 2014
+conversation_id -s4 4390
+database_id -s4 SWB1
+channel_count -i 2
+sample_max1 -r 4015.500000
+sample_max2 -r 4015.500000
+sample_coding -s4 ulaw
+channels_interleaved -s4 TRUE
+sample_count -i 2381072
+sample_rate -i 8000
+sample_n_bytes -i 1
+sample_sig_bits -i 8
+sample_byte_format -s1 1
+echo_cancellation -s7 ec-v2.5
+sample_checksum -i 14942  
+end_head  
+
+
+sox -G cut/samsung_c1/en_4156.wav -e u-law testit.sph rate 8000 channels 2
+
+for indir in cut/*; do
+  chan=`basename $indir`
+  mkdir -p swbd_format/$chan/english
+  for inpath in cut/$chan/*.wav; do
+    f=`basename $inpath .wav`
+    sox -G cut/$chan/$f.wav -e u-law swbd_format/$chan/english/$f.sph rate 8000 channels 2
+  done
+done
+
+# We need pem file hub5e_00.pem. Copied from docker container.
+for a in swbd_format/*/english; do cp hub5e_00.pem $a; done
+
+
+######################################################################
+# Here are notes on reformatting the LDC release to have the same
+# signal on each channel.
+
+for inf in /Users/adamjanin/tetra/mnt/disk1/data/ldc/LDC2002S09/hub5e_00/english/sw_*.sph; do
+  rm -f /tmp/in.sph /tmp/mono.sph /tmp/dupchan.sph
+  cp $inf /tmp/in.sph
+  sox /tmp/in.sph /tmp/mono.sph channels 1
+  sox /tmp/mono.sph /tmp/dupchan.sph channels 2
+  cp /tmp/dupchan.sph /Users/adamjanin/tetra/mnt/disk1/janin/recording/ldc_dupchan/english/`basename $inf`
+done
+
+######################################################################
+#
+# Now we want to insert silence according to the pem file.
+
+cd ~/disk1/recording/swbd_format/03-biamp1-sil/english
+
+for inpath in /mnt/disk1/janin/recording/swbd_format/03-biamp1/english/sw_*.sph; do
+ f=`basename $inpath .sph`
+ sox $inpath tmp.sph channels 1
+ for chan in A B; do
+   grep "$f $chan" /mnt/disk1/janin/recording/hub5e_00.pem | tr '\t' ' ' | tr -s ' ' | cut -f4,5 -d' ' | ~/git/iaudio/between.py -e `iainfo -f '%d' tmp.sph` | iableep -a 0 -i tmp.sph -o tmp.$chan.sph
+ done
+ sox -M tmp.A.sph tmp.B.sph $f.sph
+done
+rm tmp.sph tmp.A.sph tmp.B.sph
+

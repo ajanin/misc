@@ -1,0 +1,109 @@
+Recording on Sept 11, 2016
+Test set from switchboard and callhome.
+Korbinian stitched them together into combined.wav.
+Played using itunes on macbook pro, two channel, through
+dell surround speakers (only rear speakers used, one for each channel).
+Mics: Aggregate device on mac, combines builtin mic, polycom, and biamp.
+Order appears to be random. Used builtin for clock. 44100 sampling rate.
+
+biamp aka Devio CR_1 is stereo in/out and appears as two device, one
+for input and one for output (2 in/ 0 out and 0 in/ 2 out)
+
+polycom aka trio8800 is mono, one device 1 in/ 1 out
+
+Order appears to be:
+Builtin 1
+Builtin 2
+biamp 1
+biamp 2
+polycom
+Iphone is closer to the door
+Android is closer to the window.
+
+mrp/topof1947
+
+polycom aka trio8800
+Audio midi setup, +, create aggragate dev
+use all, drift correction, use builtin as clock, 44100
+Audacity does different order. You'll have to tap on mics.
+File->Export Multiple
+numbering before label/track
+
+Note: 01-builtin1 == 02-builtin2
+      03-biamp1 == 04-biamp2
+
+----------------------------------------------------------------------
+To get length info:
+
+iainfo -f '%f %d\n' *.wav | grep -v combined.wav > ~/arlo/Recording/times.txt
+
+play 01-builtin1.wav trim 5
+
+head -n 10 times.txt | sum_columns
+3022.85
+play 01-builtin1.wav trim 3025.85
+# Should be the start of the 10th wav
+# Works! May be a bit off. Check end of final final.
+
+head -n 39 times.txt | sum_columns
+11723.998000
+
+offset=5.3
+toplay=4
+play 01-builtin1.wav trim $(echo "11723.998 + $offset + 299.554000 - $toplay" | bc) $toplay
+# 5 is a bit off
+
+
+mkdir -p cut/01-builtin1
+makecuts.py 01-builtin1.wav cut/01-builtin1 5.3 < times.txt > cut/01-builtin1.cuts
+iachop cut/01-builtin1.cuts
+
+
+chan=05-polycom
+mkdir -p cut/$chan
+makecuts.py $chan.wav cut/$chan 5.3 < times.txt > cut/$chan.cuts
+iachop cut/$chan.cuts
+
+----------------------------------------------------------------------
+for chan in 01-builtin1 03-biamp1 05-polycom; do
+  echo $chan
+  mkdir -p cut/$chan
+  makecuts.py $chan.wav cut/$chan 5.3 < times.txt > cut/$chan.cuts
+  iachop cut/$chan.cuts
+done
+
+# Needed to make copy. Not sure why.
+
+chan=iphone_builtin
+
+sndfile-convert -pcm16 ${chan}.wav ${chan}-copy.wav
+mkdir -p cut/$chan
+makecuts.py ${chan}-copy.wav cut/$chan 9.2 < times.txt > cut/$chan.cuts
+iachop cut/$chan.cuts
+# They're a little off sigh.
+
+chan=samsung_s4
+sndfile-convert -pcm16 ${chan}.wav ${chan}-copy.wav
+mkdir -p cut/$chan
+makecuts.py ${chan}-copy.wav cut/$chan 14 < times.txt > cut/$chan.cuts
+iachop cut/$chan.cuts
+# Samsung even more off.
+
+# Try to use audacity to split. Generate label file:
+
+cat cut/iphone_builtin.cuts | sed 's|cut/iphone_builtin/\(.*\)\.wav$|\1|' | tr ' ' '\t' | cut -f2- > iphone.labs
+
+cat iphone-handcorrected.labs | xargs printf "iphone_builtin-copy.wav %f %f cut/iphone_builtin/%s.wav\n" > cut/iphone_builtin.cuts
+rm cut/iphone_builtin/*
+iachop cut/iphone_builtin.cuts
+
+cat iphone-handcorrected.txt | perl -an -e 'print $F[0]+4.74, "\t", $F[1]+4.74, "\t$F[2]\n";'
+
+######################################################################
+# No changes from iphone other than fixed offset? Wah?
+
+cat samsung-handcorrected.txt | xargs printf "samsung_c1.wav %f %f cut/samsung_c1/%s.wav\n" > cut/samsung_c1.cuts
+iachop cut/samsung_c1.cuts
+
+cat samsung-handcorrected.txt | xargs printf "samsung_c2.wav %f %f cut/samsung_c2/%s.wav\n" > cut/samsung_c2.cuts
+iachop cut/samsung_c2.cuts

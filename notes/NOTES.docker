@@ -1,0 +1,43 @@
+######################################################################
+# The following is a log of how to run a switchboard system.
+
+# Get mrp-asr from bitbucket.
+cd git
+git clone git@bitbucket.org:remeeting/mrp-asr.git
+# For the container images, the data isn't usually packaged on github.
+# Get it from local.
+cd mrp-asr/docker/corpora
+cp ~arlo/disk1/decode/corpora/eval2000-swbd.tar.gz .
+# Build the images
+docker build -f Dockerfile.SWBD-1UTT -t local/janin-corpora .
+# Create the container
+docker create --name=janin-corpora local/janin-corpora
+# Similar for graphs and models
+cd ../graphs
+cp ~arlo/disk1/decode/graphs/graph_fsh_sw1_tg.tar.gz .
+docker build -t local/janin-graphs .
+docker create --name=janin-graphs local/janin-graphs
+cd ../models
+cp ~arlo/disk1/decode/models/model_fsh_sw1_nnet2.tar.gz .
+docker build -t local/janin-models .
+docker create --name=janin-models local/janin-models
+# The decoder has actual code.
+cd ../decoders/nnet2-eval2000
+docker build -t local/janin-nnet2 .
+
+# Start with everything mounted, run on the whole thing with whole corpus,
+# 10 jobs, 32g, and 36 cpus. Run in daemon mode.
+
+docker run -d --name=janin-nnet2 -it --volumes-from janin-corpora:ro --volumes-from janin-graphs:ro --volumes-from janin-models:ro -e EVAL2000_SUFFIX=-SWBD -e DECODE_NUMJOBS=10 -m 32g --cpuset-cpus=0-36 local/janin-nnet2
+
+# Connect to daemon
+docker exec -it janin-nnet2 bash
+
+######################################################################
+# Random notes on running docker stuff.
+
+# Run a minimal container just to see what's there.
+docker run -it --rm=true --volumes-from janin-nnet2 alpine sh
+
+# Copy from a container to local.
+docker cp janin-nnet2:/var/kaldi/exp nnet-exp

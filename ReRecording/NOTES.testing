@@ -1,0 +1,87 @@
+# Create the docker image for the corpus
+cd ~/git/mrp-asr/docker/corpora/eval2000-swbd
+docker build -t local/janin-eval2000-swbd .
+
+# Create the docker image for the nnet graph
+cd ~/git/mrp-asr/docker/graphs/fsh_sw1/nnet2
+docker build -t local/janin-graph-fsh-sw1-nnet2 .
+
+# Create the docker image for the nnet models
+cd ~/git/mrp-asr/docker/models/fsh_sw1/nnet2
+docker build -t local/janin-model-fsh-sw1-nnet2 .
+
+# Create the docker image for the nnet lang
+cd ~/git/mrp-asr/docker/langs/fsh_sw1/nnet2
+docker build -t local/janin-lang-fsh-sw1-nnet2 .
+
+# Create the docker image for the eval2000 nnet2 decoder
+cd ~/git/mrp-asr/docker/decoders/eval2000/nnet2
+docker build -t local/janin-decoder-eval2000-nnet2 .
+
+# Run a decode by creating the data containers and mounting the data directory you
+# want to decode.
+
+docker create --name=janin-graph-fsh-sw1-nnet2 local/janin-graph-fsh-sw1-nnet2
+docker create --name=janin-model-fsh-sw1-nnet2 local/janin-model-fsh-sw1-nnet2
+docker create --name=janin-eval2000-swbd local/janin-eval2000-swbd
+
+# This runs on one core. Need to figure out multiple cores.
+docker run -d --name janin-decode-test1 -e EVAL2000_SUFFIX=-SWBD -e SPEECH_DIR=/export/speechdata --volumes-from janin-graph-fsh-sw1-nnet2:ro --volumes-from janin-model-fsh-sw1-nnet2:ro --volumes-from janin-eval2000-swbd:ro --volume /mnt/disk1/janin/recording/swbd_format/03-biamp1:/export/speechdata:ro local/janin-decoder-eval2000-nnet2
+
+# Scoring
+
+cd ~/git/mrp-asr/docker/scorers/eval2000
+docker build -t local/janin-scorer-eval2000 .
+
+docker create --name=janin-kaldi remeeting/mrp-worker:tools-kaldi
+
+# mrp-worker:tools-kaldi is missing common_path.sh?
+docker cp /mnt/disk0/janin/kaldi/tools/config/common_path.sh janin-kaldi:/opt/kaldi/tools/config/common_path.sh
+
+docker run -d --name janin-scorer-test1 --volumes-from janin-kaldi --volumes-from janin-decode-test1:ro local/janin-scorer-eval2000
+
+######################################################################
+# Try with corpora
+
+
+docker run -it --name janin-decode-test2 -e EVAL2000_SUFFIX=-SWBD --volumes-from janin-graph-fsh-sw1-nnet2:ro --volumes-from janin-model-fsh-sw1-nnet2:ro --volumes-from janin-eval2000-swbd:ro -e DECODE_NUMJOBS=20 -m 64g --cpuset-cpus=0-19 local/janin-decoder-eval2000-nnet2 bash
+
+
+docker run -it --name janin-scorer-test2 --volumes-from janin-kaldi --volumes-from janin-decode-test2:ro local/janin-scorer-eval2000 bash
+
+######################################################################
+
+
+
+cd ~/git/mrp-asr/docker/corpora/eval2000-1utt
+docker build -t local/janin-eval2000-1utt-2up .
+docker create --name=janin-eval2000-1utt-2up local/janin-eval2000-1utt-2up
+docker run -it --rm --volumes-from janin-eval2000-1utt-2up ubuntu bash
+
+cd /export/corpora/LDC/LDC2002S09-1UTT/hub5e_00/english
+sox sw_4390.sph tmp.sph channels 1
+sox tmp.sph tmp2.sph channels 2
+rm sw_4390.sph tmp.sph
+mv tmp2.sph sw_4390.sph
+
+docker commit janin-eval2000-1utt-2up
+
+docker run -it --name janin-decode-test3 -e EVAL2000_SUFFIX=-1UTT --volumes-from janin-graph-fsh-sw1-nnet2:ro --volumes-from janin-model-fsh-sw1-nnet2:ro --volumes-from janin-eval2000-1utt-2up:ro local/janin-decoder-eval2000-nnet2 bash
+
+######################################################################
+#
+# Test with LDC where the channels have been merged and duplicated.
+
+docker run -it --name janin-decode-dupchan --volumes-from janin-graph-fsh-sw1-nnet2:ro --volumes-from janin-model-fsh-sw1-nnet2:ro --volumes-from janin-eval2000-swbd:ro --volume /mnt/disk1/janin/recording/ldc_dupchan:/export/ldc_dupchan:ro -e SPEECH_DIR=/export/ldc_dupchan -e EVAL2000_SUFFIX=-SWBD -e DECODE_NUMJOBS=20 -m 64g --cpuset-cpus=0-19 local/janin-decoder-eval2000-nnet2 bash
+
+docker run -it --name janin-scorer-dupchan --volumes-from janin-kaldi --volumes-from janin-decode-dupchan:ro local/janin-scorer-eval2000 bash
+
+######################################################################
+#
+# Yet another, this time with silence added in the parts of the pem that are not "forground".
+
+docker run -it --name janin-decode-sil --volumes-from janin-graph-fsh-sw1-nnet2:ro --volumes-from janin-model-fsh-sw1-nnet2:ro --volumes-from janin-eval2000-swbd:ro --volume /mnt/disk1/janin/recording/swbd_format/03-biamp1-sil:/export/03-biamp1-sil:ro -e SPEECH_DIR=/export/03-biamp1-sil -e EVAL2000_SUFFIX=-SWBD -e DECODE_NUMJOBS=20 -m 64g --cpuset-cpus=0-19 local/janin-decoder-eval2000-nnet2 bash
+
+docker run -it --name janin-scorer-sil --volumes-from janin-kaldi --volumes-from janin-decode-sil:ro local/janin-scorer-eval2000 bash
+
+

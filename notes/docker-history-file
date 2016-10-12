@@ -1,0 +1,86 @@
+    1  who
+    2  top
+    3  docker ps
+    4  cd disk0
+    5  ls
+    6  df .
+    7  cp ~arlo/disk0/bloomberg-deliverable-phase1-final.tar.gz 
+    8  cp ~arlo/disk0/bloomberg-deliverable-phase1-final.tar.gz  .
+    9  tar xzf bloomberg-deliverable-phase1-final.tar.gz 
+   10  cd bloomberg-deliverable-phase1-final/
+   11  ls
+   12  more Readme.md 
+   13  docker build -t local/janintest .
+   14  more Readme.md 
+   15  docker run -it --rm=true local/janintest bash
+   16  docker run -it --rm=true --cpuset-cpus=0-12 -m 12g local/janintest bash
+   17  ls
+   18  cd /var/lib/docker/
+   19  ls
+   20  sudo ls
+   21  ssh-keygen -t rsa 
+   22  cat ~/.ssh/id_rsa.pub
+   23  mkdir git
+   24  cd git
+   25  git clone git@bitbucket.org:remeeting/mrp-asr.git
+   26  ls
+   27  history
+   28  ls
+   29  cd mrp-asr/
+   30  ls
+   31  cd docker/
+   32  cd corpora/
+   33  ls
+   34  tar tf eval2000-1utt.tar.gz 
+   35  cp ~arlo/disk1/decode/corpora/eval2000-swbd.tar.gz .
+   36  git status
+   37  cat .gitignore 
+   38  more Dockerfile
+   39  ls
+   40  more Dockerfile.SWBD-1UTT 
+   41  docker build -f Dockerfile.SWBD-1UTT -t local/janin-corpora .
+   42  docker images
+   43  docker ps 
+   44  docker ps -a
+   45  docker create --name=janin-corpora local/janin-corpora
+   46  docker ps -a
+   47  cd ..
+   48  ls
+   49  cd graphs/
+   50  ls
+   51  cp ~arlo/disk1/decode/graphs/graph_fsh_sw1_tg.tar.gz .
+   52  cat Dockerfile 
+   53  docker build -t local/janin-graphs
+   54  docker build -t local/janin-graphs .
+   55  docker create --name=janin-graphs local/janin-graphs
+   56  cd ../models/
+   57  ls
+   58  cp ~arlo/disk1/decode/models/model_fsh_sw1_nnet2.tar.gz .
+   59  docker build -t local/janin-models 
+   60  docker build -t local/janin-models .
+   61  docker create --name=janin-models local/janin-models
+   62  docker ps
+   63  docker ps -a
+   64  cd ../decoders/
+   65  ls
+   66  cd nnet2-eval2000/
+   67  ls
+   68  tar tf kaldi.tar.gz 
+   69  cat run.sh 
+   70  ls -l
+   71  cat Dockerfile 
+   72  docker build -t local/janin-nnet2 .
+   73  docker run --rm=true --name=janin-nnet2 -it local/janin-nnet2 bash
+   74  docker run --rm=true --name=janin-nnet2 -it --volumes-from janin-corpora --volumes-from janin-graphs --volumes-from janin-models local/janin-nnet2 bash
+   75  docker run --rm=true --name=janin-nnet2 -it --volumes-from janin-corpora:ro --volumes-from janin-graphs:ro --volumes-from janin-models:ro -v /export/corpora/LDC:/export/corpora/LDC local/janin-nnet2 bash
+   76  ls -l /export/corpora/LDC
+   77  docker run --rm=true --name=janin-nnet2 -it --volumes-from janin-corpora:ro --volumes-from janin-graphs:ro --volumes-from janin-models:ro local/janin-nnet2 bash
+   78  docker run -d --name=janin-nnet2 -it --volumes-from janin-corpora:ro --volumes-from janin-graphs:ro --volumes-from janin-models:ro -e EVAL2000_SUFFIX=-SWBD -e DECODE_NUMJOBS=10 -m 32g --cpuset-cpus=0-36 local/janin-nnet2
+   79  docker ps
+   80  top
+   81  pwd
+   82  ls /export/corpora/LDC
+   83  docker logs
+   84  docker logs 5ffc6412b88bd27d6cbb599454f40c427d5f5f6755df5514a56cf38351aa9d64 
+   85  docker exec -it janin-nnet2 bash
+   86  history > ~/afile

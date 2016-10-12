@@ -1,0 +1,13 @@
+# Build dev container.
+
+~/git/mrp-ops/localhost/ansible/
+ansible-playbook osx.yml -e mrp_user_id=janin -t dev
+
+# Optionally add -e pull=yes and/or -e restart_services=yes
+
+# Home directory is mounted rw as /mnt/dockerhost/home/adamjanin/
+# Top level is mounted ro as /Volumes/Macintosh HD
+# Home directories also mounted ro as /Users
+
+# Log in
+ssh -p 2222 janin@dockerhost

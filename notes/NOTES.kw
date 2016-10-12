@@ -1,0 +1,22 @@
+Switchboard subset eval2000
+Pretrained AM models from hopkins (switchboard + fisher)
+nnet2 11.2
+chain 8.5
+nnet3 10
+
+eesen higher wer, but interesting
+
+Decode graphs
+fisher+swbd tri
+lmrescore 4g +0.5 wer
++mod9 interp
++kw search boosted
+
+tetra.mod9.com
+
+boost_keywords (scripts directory in swordfish)
+
+Precision/recall curves
+Words with 10 or fewer in swbd eval2000
+        or only 1? Check historgrams
+
