@@ -1,0 +1,8 @@
+# first line comment
+10.2  15.6
+16.2  30.5
+35.1  50.2   
+# comment at start
+   # comment elsewhere
+   # NOte that embedded comments are not allowed
+65.3 76
