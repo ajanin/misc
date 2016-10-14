@@ -7,3 +7,10 @@ sudo usermod -aG docker ubuntu
 # Log in, log out
 docker run -it --rm ubuntu bash
 # Downloaded ubuntu, but then got "write pipe: bad file descriptor"
+# Turns out docker doesn't track architecture (or anything else). Must use an image with compatible arch.
+docker run -it --rm armv7/armhf-ubuntu bash
+# Works!
+
+# Currently at:
+ssh odroid@10.21.105.117
+# Changed the password - ask if you wanna try to log in!
